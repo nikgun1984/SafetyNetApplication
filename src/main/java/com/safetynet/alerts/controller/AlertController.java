@@ -1,6 +1,7 @@
 package com.safetynet.alerts.controller;
 
 import com.safetynet.alerts.dto.ChildInfoDto;
+import com.safetynet.alerts.dto.FireAddressResponseDto;
 import com.safetynet.alerts.service.AlertService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,5 +26,15 @@ public class AlertController {
     @GetMapping("/childAlert")
     public List<ChildInfoDto> getChildAlert(@RequestParam("address") String address) {
         return alertService.getChildAlert(address);
+    }
+
+    @GetMapping("/phoneAlert")
+    public List<String> getPhoneAlert(@RequestParam("firestation") String stationNumber) {
+        return alertService.getPhoneAlert(stationNumber);
+    }
+
+    @GetMapping("/fire")
+    public FireAddressResponseDto getFire(@RequestParam("address") String address) {
+        return alertService.getFire(address);
     }
 }

@@ -2,6 +2,8 @@ package com.safetynet.alerts.service;
 
 import com.safetynet.alerts.dto.ChildInfoDto;
 import com.safetynet.alerts.dto.PersonInfoDto;
+import com.safetynet.alerts.dto.FireAddressResponseDto;
+import com.safetynet.alerts.dto.ResidentInfoDto;
 import com.safetynet.alerts.model.Person;
 import com.safetynet.alerts.model.FireStationMapping;
 import com.safetynet.alerts.model.MedicalRecord;
@@ -40,7 +42,7 @@ public class AlertService {
     public Map<String, Object> getFirestationPeople(String stationNumber) {
         List<FireStationMapping> mappings = dataService.getFirestations().stream()
                 .filter(fs -> fs.station != null && fs.station.equals(stationNumber))
-                .toList();
+                .collect(Collectors.toList());
 
         Set<String> addresses = mappings.stream()
                 .map(fs -> fs.address)
@@ -48,12 +50,13 @@ public class AlertService {
 
         List<Person> persons = dataService.getPersons().stream()
                 .filter(p -> addresses.contains(p.address))
-                .toList();
+                .collect(Collectors.toList());
 
         List<PersonInfoDto> personDtos = persons.stream()
                 .map(p -> new PersonInfoDto(p.firstName, p.lastName, p.address, p.phone))
                 .collect(Collectors.toList());
-
+        //  provide a count of the number of adults and the
+        //  number of children (any individual aged 18 years or younger) in the served area.
         int children = 0;
         int adults = 0;
         for (Person p : persons) {
@@ -73,13 +76,16 @@ public class AlertService {
     }
 
     public List<ChildInfoDto> getChildAlert(String address) {
+        // filter residents at the given address
         List<Person> residents = dataService.getPersons().stream()
                 .filter(p -> p.address.equalsIgnoreCase(address))
                 .toList();
-
+        // then find children among them
         List<ChildInfoDto> result = new ArrayList<>();
+
         for (Person p : residents) {
             Optional<Integer> ageOpt = findMedical(p).flatMap(m -> ageFromBirthdate(m.birthdate));
+            // make sure to only include children (age 18 or younger)
             if (ageOpt.isPresent() && ageOpt.get() <= 18) {
                 List<ChildInfoDto.HouseholdMember> others = residents.stream()
                         .filter(o -> !(o.firstName.equals(p.firstName) && o.lastName.equals(p.lastName)))
@@ -89,5 +95,44 @@ public class AlertService {
             }
         }
         return result;
+    }
+
+    public List<String> getPhoneAlert(String stationNumber) {
+        // get addresses covered by the station number
+        Set<String> addresses = dataService.getFirestations().stream()
+                .filter(fs -> fs.station != null && fs.station.equals(stationNumber))
+                .map(fs -> fs.address)
+                .collect(Collectors.toSet());
+        // a list of phone numbers of residents served by the fire station
+        return dataService.getPersons().stream()
+                .filter(p -> addresses.contains(p.address))
+                .map(p -> p.phone)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    public FireAddressResponseDto getFire(String address) {
+        Optional<FireStationMapping> mapping = dataService.getFirestations().stream()
+                .filter(fs -> fs.address.equalsIgnoreCase(address))
+                .findFirst();
+
+        String station = mapping.map(m -> m.station).orElse(null);
+
+        List<Person> residents = dataService.getPersons().stream()
+                .filter(p -> p.address.equalsIgnoreCase(address))
+                .collect(Collectors.toList());
+        // return the list of residents living at the given address as well as the fire
+        // station number serving the address. The list includes the name, phone number,
+        // age, and medical history (medications and allergies) of each person
+        List<ResidentInfoDto> residentDtos = residents.stream().map(p -> {
+            Optional<MedicalRecord> mr = findMedical(p);
+            int age = mr.flatMap(m -> ageFromBirthdate(m.birthdate)).orElse(0);
+            List<String> meds = mr.map(m -> m.medications).orElse(Collections.emptyList());
+            List<String> allergies = mr.map(m -> m.allergies).orElse(Collections.emptyList());
+            return new ResidentInfoDto(p.firstName, p.lastName, p.phone, age, meds, allergies);
+        }).collect(Collectors.toList());
+
+        return new FireAddressResponseDto(station, residentDtos);
     }
 }

@@ -6,6 +6,7 @@ import com.safetynet.alerts.model.Person;
 import com.safetynet.alerts.model.FireStationMapping;
 import com.safetynet.alerts.model.MedicalRecord;
 import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +14,7 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 
+@Getter
 @Service
 public class DataService {
     private List<Person> persons = Collections.emptyList();
@@ -33,7 +35,4 @@ public class DataService {
         }
     }
 
-    public List<Person> getPersons() { return persons; }
-    public List<FireStationMapping> getFirestations() { return firestations; }
-    public List<MedicalRecord> getMedicalrecords() { return medicalrecords; }
 }

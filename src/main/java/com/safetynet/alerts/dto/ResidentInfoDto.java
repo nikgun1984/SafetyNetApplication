@@ -10,6 +10,13 @@ public class ResidentInfoDto {
     public List<String> medications;
     public List<String> allergies;
 
+    public ResidentInfoDto(String firstName, String lastName, String phone, int age) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.phone = phone;
+        this.age = age;
+    }
+
     public ResidentInfoDto(String firstName, String lastName, String phone, int age,
                            List<String> medications, List<String> allergies) {
         this.firstName = firstName;
