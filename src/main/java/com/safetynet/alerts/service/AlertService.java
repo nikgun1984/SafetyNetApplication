@@ -135,4 +135,41 @@ public class AlertService {
 
         return new FireAddressResponseDto(station, residentDtos);
     }
+
+    public Map<String, List<ResidentInfoDto>> getFloodStations(List<String> stationList) {
+        if (stationList == null || stationList.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // addresses served by the requested stations
+        Set<String> addresses = dataService.getFirestations().stream()
+                .filter(fs -> fs.station != null && stationList.contains(fs.station))
+                .map(fs -> fs.address)
+                .collect(Collectors.toSet());
+
+        if (addresses.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // group persons by their address (use person's address string as the map key)
+        Map<String, List<Person>> personsByAddress = dataService.getPersons().stream()
+                .filter(p -> p.address != null && addresses.stream().anyMatch(addr -> addr.equalsIgnoreCase(p.address)))
+                .collect(Collectors.groupingBy(p -> p.address));
+
+        Map<String, List<ResidentInfoDto>> result = new HashMap<>();
+
+        for (Map.Entry<String, List<Person>> entry : personsByAddress.entrySet()) {
+            List<ResidentInfoDto> residentDtos = entry.getValue().stream().map(p -> {
+                Optional<MedicalRecord> mr = findMedical(p);
+                int age = mr.flatMap(m -> ageFromBirthdate(m.birthdate)).orElse(0);
+                List<String> meds = mr.map(m -> m.medications).orElse(Collections.emptyList());
+                List<String> allergies = mr.map(m -> m.allergies).orElse(Collections.emptyList());
+                return new ResidentInfoDto(p.firstName, p.lastName, p.phone, age, meds, allergies);
+            }).collect(Collectors.toList());
+
+            result.put(entry.getKey(), residentDtos);
+        }
+
+        return result;
+    }
 }

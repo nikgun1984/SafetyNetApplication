@@ -112,4 +112,23 @@ class AlertControllerTests {
                 .andExpect(jsonPath("$.residents[0].lastName", is("Doe")))
                 .andExpect(jsonPath("$.residents[0].phone", is("841-874-6512")));
     }
+
+    @Test
+    void getFloodStations_shouldReturnHouseholdsGroupedByAddress() throws Exception {
+        // prepare test data
+        ResidentInfoDto resident = new ResidentInfoDto("John", "Doe", "841-874-6512", 23);
+        Map<String, List<ResidentInfoDto>> resp = new HashMap<>();
+        resp.put("1509 Culver St", Arrays.asList(resident));
+
+        // service is expected to be called with the parsed list ["1","2"]
+        when(alertService.getFloodStations(Arrays.asList("1", "2"))).thenReturn(resp);
+
+        mockMvc.perform(get("/flood/stations").param("stations", "1,2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$['1509 Culver St']", hasSize(1)))
+                .andExpect(jsonPath("$['1509 Culver St'][0].firstName", is("John")))
+                .andExpect(jsonPath("$['1509 Culver St'][0].lastName", is("Doe")))
+                .andExpect(jsonPath("$['1509 Culver St'][0].phone", is("841-874-6512")))
+                .andExpect(jsonPath("$['1509 Culver St'][0].age", is(23)));
+    }
 }

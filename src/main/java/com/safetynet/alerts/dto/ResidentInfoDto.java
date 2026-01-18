@@ -1,7 +1,12 @@
 package com.safetynet.alerts.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
+@Getter
+@Setter
 public class ResidentInfoDto {
     public String firstName;
     public String lastName;
@@ -9,6 +14,8 @@ public class ResidentInfoDto {
     public int age;
     public List<String> medications;
     public List<String> allergies;
+
+    public ResidentInfoDto() {}
 
     public ResidentInfoDto(String firstName, String lastName, String phone, int age) {
         this.firstName = firstName;
