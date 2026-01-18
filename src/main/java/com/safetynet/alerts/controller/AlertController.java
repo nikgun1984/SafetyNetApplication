@@ -52,4 +52,15 @@ public class AlertController {
 
         return alertService.getFloodStations(stationList);
     }
+
+    @GetMapping("/personInfo")
+    public List<ResidentInfoDto> getPersonInfo(
+            @RequestParam("lastName") String lastName) {
+        return alertService.getPersonInfoByLastName(lastName);
+    }
+
+    @GetMapping("/communityEmail")
+    public List<String> getCommunityEmail(@RequestParam("city") String city) {
+        return alertService.getEmailsByCity(city);
+    }
 }

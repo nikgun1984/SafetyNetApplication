@@ -1,7 +1,6 @@
 package com.safetynet.alerts.service;
 
 import com.safetynet.alerts.dto.ChildInfoDto;
-import com.safetynet.alerts.dto.PersonInfoDto;
 import com.safetynet.alerts.dto.FireAddressResponseDto;
 import com.safetynet.alerts.dto.ResidentInfoDto;
 import com.safetynet.alerts.model.Person;
@@ -52,8 +51,8 @@ public class AlertService {
                 .filter(p -> addresses.contains(p.address))
                 .collect(Collectors.toList());
 
-        List<PersonInfoDto> personDtos = persons.stream()
-                .map(p -> new PersonInfoDto(p.firstName, p.lastName, p.address, p.phone))
+        List<ResidentInfoDto> personDtos = persons.stream()
+                .map(p -> new ResidentInfoDto(p.firstName, p.lastName, p.address, p.phone))
                 .collect(Collectors.toList());
         //  provide a count of the number of adults and the
         //  number of children (any individual aged 18 years or younger) in the served area.
@@ -171,5 +170,70 @@ public class AlertService {
         }
 
         return result;
+    }
+
+    public List<ResidentInfoDto> getPersonInfoByLastName(String lastName) {
+        if (lastName == null || lastName.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String match = lastName.trim().toLowerCase();
+
+        List<Person> persons = dataService.getPersons();
+
+        return persons.stream()
+                .filter(p -> p.lastName != null && p.lastName.toLowerCase().equals(match))
+                .map(p -> {
+                    Optional<MedicalRecord> mr = dataService.getMedicalrecords().stream()
+                            .filter(m -> m.firstName != null && m.lastName != null
+                                    && m.firstName.equalsIgnoreCase(p.firstName)
+                                    && m.lastName.equalsIgnoreCase(p.lastName))
+                            .findFirst();
+
+                    int age = mr.map(m -> computeAge(m.birthdate)).orElse(0);
+                    List<String> meds = mr.map(m -> m.medications).orElse(Collections.emptyList());
+                    List<String> allergies = mr.map(m -> m.allergies).orElse(Collections.emptyList());
+
+                    return new ResidentInfoDto(
+                            p.firstName,
+                            p.lastName,
+                            p.address,
+                            age,
+                            p.email,
+                            meds,
+                            allergies
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+    private int computeAge(String birthdate) {
+        if (birthdate == null || birthdate.isBlank()) {
+            return 0;
+        }
+        try {
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+            LocalDate bdate = LocalDate.parse(birthdate, fmt);
+            return Period.between(bdate, LocalDate.now()).getYears();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    public List<String> getEmailsByCity(String city) {
+        if (city == null || city.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        String match = city.trim().toLowerCase(Locale.ROOT);
+
+        return dataService.getPersons().stream()
+                .filter(p -> p.city != null
+                        // convert to lower case and compare the normalized string to match
+                        && p.city.trim().toLowerCase(Locale.ROOT).equals(match)
+                        && p.email != null
+                        && !p.email.isBlank())
+                .map(p -> p.email)
+                .distinct()
+                .collect(Collectors.toList());
     }
 }

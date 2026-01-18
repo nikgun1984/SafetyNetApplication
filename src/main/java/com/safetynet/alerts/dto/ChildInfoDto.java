@@ -2,10 +2,7 @@ package com.safetynet.alerts.dto;
 
 import java.util.List;
 
-public class ChildInfoDto {
-    public String firstName;
-    public String lastName;
-    public int age;
+public class ChildInfoDto extends ResidentInfoDto {
     public List<HouseholdMember> householdMembers;
 
     public static class HouseholdMember {
@@ -19,9 +16,10 @@ public class ChildInfoDto {
     }
 
     public ChildInfoDto(String f, String l, int age, List<HouseholdMember> members) {
-        this.firstName = f;
-        this.lastName = l;
-        this.age = age;
+        super();
+        setFirstName(f);
+        setLastName(l);
+        setAge(age);
         this.householdMembers = members;
     }
 }
