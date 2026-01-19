@@ -2,6 +2,8 @@ package com.safetynet.alerts.controller;
 
 import com.safetynet.alerts.dto.*;
 import com.safetynet.alerts.service.AlertService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -14,6 +16,8 @@ import java.util.stream.Collectors;
 
 @RestController
 public class AlertController {
+
+    private static final Logger log = LoggerFactory.getLogger(AlertController.class);
     private final AlertService alertService;
 
     public AlertController(AlertService alertService) {
@@ -69,22 +73,36 @@ public class AlertController {
     public ResponseEntity<Void> addPerson(@RequestBody PersonDto person) {
         alertService.addPerson(person);
         URI location = URI.create("/person?firstName=" + person.firstName() + "&lastName=" + person.lastName());
+        log.info("Created person {} {}", person.firstName(), person.lastName());
         return ResponseEntity.created(location).build();
     }
 
     @PutMapping("/person")
     public ResponseEntity<Void> updatePerson(@RequestBody PersonDto person) {
         boolean updated = alertService.updatePerson(person);
-        return updated ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+        if (updated) {
+            log.info("Updated person {} {}", person.firstName(), person.lastName());
+            return ResponseEntity.ok().build();
+        } else {
+            log.info("Person not found for update: {} {}", person.firstName(), person.lastName());
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/person")
     public ResponseEntity<Void> deletePersonByBody(@RequestBody PersonDto person) {
         if (person == null || person.firstName() == null || person.lastName() == null) {
+            log.warn("Bad request to DELETE /person - missing firstName or lastName");
             return ResponseEntity.badRequest().build();
         }
         boolean deleted = alertService.deletePerson(person.firstName(), person.lastName());
-        return deleted ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+        if (deleted) {
+            log.info("Deleted person {} {}", person.firstName(), person.lastName());
+            return ResponseEntity.ok().build();
+        } else {
+            log.info("Person not found for deletion: {} {}", person.firstName(), person.lastName());
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping("/firestation")
@@ -93,10 +111,12 @@ public class AlertController {
         if (dto == null
                 || dto.getAddress() == null || dto.getAddress().isBlank()
                 || dto.getStation() == null || dto.getStation().isBlank()) {
+            log.warn("Invalid firestation create request");
             return ResponseEntity.badRequest().build();
         }
 
         alertService.addFirestation(dto);
+        log.info("Added firestation mapping address={} station={}", dto.getAddress(), dto.getStation());
 
         URI location = uriBuilder
                 .path("/firestation")
@@ -111,15 +131,23 @@ public class AlertController {
     @PutMapping("/firestation")
     public ResponseEntity<Void> updateFirestation(@RequestBody FirestationDto dto) {
         if (dto == null || dto.getAddress() == null || dto.getStation() == null) {
+            log.warn("Bad request to PUT /firestation - missing address or station");
             return ResponseEntity.badRequest().build();
         }
         boolean updated = alertService.updateFirestation(dto);
-        return updated ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+        if (updated) {
+            log.info("Updated firestation for address={} to station={}", dto.getAddress(), dto.getStation());
+            return ResponseEntity.ok().build();
+        } else {
+            log.info("Firestation not found for update: address={}", dto.getAddress());
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/firestation")
     public ResponseEntity<Void> deleteFirestation(@RequestBody(required = false) FirestationDto dto) {
         if (dto == null) {
+            log.warn("Bad request to DELETE /firestation - body is null");
             return ResponseEntity.badRequest().build();
         }
 
@@ -128,11 +156,18 @@ public class AlertController {
 
         // make sure either address or station is provided for deletion
         if ((station == null || station.isBlank()) && (address == null || address.isBlank())) {
+            log.warn("Bad request to DELETE /firestation - both address and station are missing or blank");
             return ResponseEntity.badRequest().build();
         }
 
         boolean deleted = alertService.deleteFirestation(address, station);
 
-        return deleted ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+        if (deleted) {
+            log.info("Deleted firestation mapping address={} station={}", address, station);
+            return ResponseEntity.ok().build();
+        } else {
+            log.info("Firestation mapping not found for deletion address={} station={}", address, station);
+            return ResponseEntity.notFound().build();
+        }
     }
 }
