@@ -184,7 +184,7 @@ class AlertControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", org.hamcrest.Matchers.containsString("/firestation?address=1509%20Tampa%20St")));
+                .andExpect(header().string("Location", containsString("/firestation?address=1509%20Highland%20Oaks%20Rd")));
     }
 
     @Test
@@ -289,7 +289,7 @@ class AlertControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", org.hamcrest.Matchers.containsString("/person?firstName=Nick&lastName=Gundobin")));
+                .andExpect(header().string("Location", containsString("/person?firstName=Nick&lastName=Gundobin")));
     }
 
     @Test
@@ -385,7 +385,7 @@ class AlertControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", org.hamcrest.Matchers.containsString("/medicalRecord?firstName=Nick&lastName=Gundobin")));
+                .andExpect(header().string("Location", containsString("/medicalRecord?firstName=Nick&lastName=Gundobin")));
     }
 
     @Test
