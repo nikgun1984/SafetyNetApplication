@@ -1,10 +1,8 @@
 package com.safetynet.alerts.service;
 
-import com.safetynet.alerts.dto.ChildInfoDto;
-import com.safetynet.alerts.dto.FireAddressResponseDto;
-import com.safetynet.alerts.dto.ResidentInfoDto;
+import com.safetynet.alerts.dto.*;
+import com.safetynet.alerts.model.Firestation;
 import com.safetynet.alerts.model.Person;
-import com.safetynet.alerts.model.FireStationMapping;
 import com.safetynet.alerts.model.MedicalRecord;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +23,7 @@ public class AlertService {
 
     private Optional<MedicalRecord> findMedical(Person p) {
         return dataService.getMedicalrecords().stream()
-                .filter(m -> m.firstName.equals(p.firstName) && m.lastName.equals(p.lastName))
+                .filter(m -> m.firstName.equals(p.getFirstName()) && m.lastName.equals(p.getLastName()))
                 .findFirst();
     }
 
@@ -39,7 +37,7 @@ public class AlertService {
     }
 
     public Map<String, Object> getFirestationPeople(String stationNumber) {
-        List<FireStationMapping> mappings = dataService.getFirestations().stream()
+        List<Firestation> mappings = dataService.getFirestations().stream()
                 .filter(fs -> fs.station != null && fs.station.equals(stationNumber))
                 .collect(Collectors.toList());
 
@@ -48,11 +46,11 @@ public class AlertService {
                 .collect(Collectors.toSet());
 
         List<Person> persons = dataService.getPersons().stream()
-                .filter(p -> addresses.contains(p.address))
+                .filter(p -> addresses.contains(p.getAddress()))
                 .collect(Collectors.toList());
 
         List<ResidentInfoDto> personDtos = persons.stream()
-                .map(p -> new ResidentInfoDto(p.firstName, p.lastName, p.address, p.phone))
+                .map(p -> new ResidentInfoDto(p.getFirstName(), p.getLastName(), p.getAddress(), p.getPhone()))
                 .collect(Collectors.toList());
         //  provide a count of the number of adults and the
         //  number of children (any individual aged 18 years or younger) in the served area.
@@ -77,7 +75,7 @@ public class AlertService {
     public List<ChildInfoDto> getChildAlert(String address) {
         // filter residents at the given address
         List<Person> residents = dataService.getPersons().stream()
-                .filter(p -> p.address.equalsIgnoreCase(address))
+                .filter(p -> p.getAddress().equalsIgnoreCase(address))
                 .toList();
         // then find children among them
         List<ChildInfoDto> result = new ArrayList<>();
@@ -87,10 +85,10 @@ public class AlertService {
             // make sure to only include children (age 18 or younger)
             if (ageOpt.isPresent() && ageOpt.get() <= 18) {
                 List<ChildInfoDto.HouseholdMember> others = residents.stream()
-                        .filter(o -> !(o.firstName.equals(p.firstName) && o.lastName.equals(p.lastName)))
-                        .map(o -> new ChildInfoDto.HouseholdMember(o.firstName, o.lastName))
+                        .filter(o -> !(o.getFirstName().equals(p.getFirstName()) && o.getLastName().equals(p.getLastName())))
+                        .map(o -> new ChildInfoDto.HouseholdMember(o.getFirstName(), o.getLastName()))
                         .collect(Collectors.toList());
-                result.add(new ChildInfoDto(p.firstName, p.lastName, ageOpt.get(), others));
+                result.add(new ChildInfoDto(p.getFirstName(), p.getLastName(), ageOpt.get(), others));
             }
         }
         return result;
@@ -104,22 +102,22 @@ public class AlertService {
                 .collect(Collectors.toSet());
         // a list of phone numbers of residents served by the fire station
         return dataService.getPersons().stream()
-                .filter(p -> addresses.contains(p.address))
-                .map(p -> p.phone)
+                .filter(p -> addresses.contains(p.getAddress()))
+                .map(p -> p.getPhone())
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
     }
 
     public FireAddressResponseDto getFire(String address) {
-        Optional<FireStationMapping> mapping = dataService.getFirestations().stream()
+        Optional<Firestation> mapping = dataService.getFirestations().stream()
                 .filter(fs -> fs.address.equalsIgnoreCase(address))
                 .findFirst();
 
         String station = mapping.map(m -> m.station).orElse(null);
 
         List<Person> residents = dataService.getPersons().stream()
-                .filter(p -> p.address.equalsIgnoreCase(address))
+                .filter(p -> p.getAddress().equalsIgnoreCase(address))
                 .collect(Collectors.toList());
         // return the list of residents living at the given address as well as the fire
         // station number serving the address. The list includes the name, phone number,
@@ -129,7 +127,7 @@ public class AlertService {
             int age = mr.flatMap(m -> ageFromBirthdate(m.birthdate)).orElse(0);
             List<String> meds = mr.map(m -> m.medications).orElse(Collections.emptyList());
             List<String> allergies = mr.map(m -> m.allergies).orElse(Collections.emptyList());
-            return new ResidentInfoDto(p.firstName, p.lastName, p.phone, age, meds, allergies);
+            return new ResidentInfoDto(p.getFirstName(), p.getLastName(), p.getPhone(), age, meds, allergies);
         }).collect(Collectors.toList());
 
         return new FireAddressResponseDto(station, residentDtos);
@@ -152,8 +150,8 @@ public class AlertService {
 
         // group persons by their address (use person's address string as the map key)
         Map<String, List<Person>> personsByAddress = dataService.getPersons().stream()
-                .filter(p -> p.address != null && addresses.stream().anyMatch(addr -> addr.equalsIgnoreCase(p.address)))
-                .collect(Collectors.groupingBy(p -> p.address));
+                .filter(p -> p.getAddress() != null && addresses.stream().anyMatch(addr -> addr.equalsIgnoreCase(p.getAddress())))
+                .collect(Collectors.groupingBy(p -> p.getAddress()));
 
         Map<String, List<ResidentInfoDto>> result = new HashMap<>();
 
@@ -163,7 +161,7 @@ public class AlertService {
                 int age = mr.flatMap(m -> ageFromBirthdate(m.birthdate)).orElse(0);
                 List<String> meds = mr.map(m -> m.medications).orElse(Collections.emptyList());
                 List<String> allergies = mr.map(m -> m.allergies).orElse(Collections.emptyList());
-                return new ResidentInfoDto(p.firstName, p.lastName, p.phone, age, meds, allergies);
+                return new ResidentInfoDto(p.getFirstName(), p.getLastName(), p.getPhone(), age, meds, allergies);
             }).collect(Collectors.toList());
 
             result.put(entry.getKey(), residentDtos);
@@ -182,12 +180,12 @@ public class AlertService {
         List<Person> persons = dataService.getPersons();
 
         return persons.stream()
-                .filter(p -> p.lastName != null && p.lastName.toLowerCase().equals(match))
+                .filter(p -> p.getLastName() != null && p.getLastName().toLowerCase().equals(match))
                 .map(p -> {
                     Optional<MedicalRecord> mr = dataService.getMedicalrecords().stream()
                             .filter(m -> m.firstName != null && m.lastName != null
-                                    && m.firstName.equalsIgnoreCase(p.firstName)
-                                    && m.lastName.equalsIgnoreCase(p.lastName))
+                                    && m.firstName.equalsIgnoreCase(p.getFirstName())
+                                    && m.lastName.equalsIgnoreCase(p.getLastName()))
                             .findFirst();
 
                     int age = mr.map(m -> computeAge(m.birthdate)).orElse(0);
@@ -195,11 +193,11 @@ public class AlertService {
                     List<String> allergies = mr.map(m -> m.allergies).orElse(Collections.emptyList());
 
                     return new ResidentInfoDto(
-                            p.firstName,
-                            p.lastName,
-                            p.address,
+                            p.getFirstName(),
+                            p.getLastName(),
+                            p.getPhone(),
                             age,
-                            p.email,
+                            p.getEmail(),
                             meds,
                             allergies
                     );
@@ -227,13 +225,75 @@ public class AlertService {
         String match = city.trim().toLowerCase(Locale.ROOT);
 
         return dataService.getPersons().stream()
-                .filter(p -> p.city != null
+                .filter(p -> p.getCity() != null
                         // convert to lower case and compare the normalized string to match
-                        && p.city.trim().toLowerCase(Locale.ROOT).equals(match)
-                        && p.email != null
-                        && !p.email.isBlank())
-                .map(p -> p.email)
+                        && p.getCity().trim().toLowerCase(Locale.ROOT).equals(match)
+                        && p.getEmail() != null
+                        && !p.getEmail().isBlank())
+                .map(p -> p.getEmail())
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    public void addPerson(PersonDto dto) {
+        if (dto == null || dto.firstName() == null || dto.lastName() == null) return;
+        Person p = new Person(dto.firstName(), dto.lastName(), dto.address(), dto.city(), dto.zip(), dto.phone(), dto.email());
+        dataService.getPersons().add(p);
+    }
+
+    public boolean updatePerson(PersonDto dto) {
+        if (dto == null || dto.firstName() == null || dto.lastName() == null) return false;
+
+        for (Person p : dataService.getPersons()) {
+            if (p.getFirstName() != null && p.getLastName() != null && p.getFirstName().equals(dto.firstName()) && p.getLastName().equals(dto.lastName())) {
+                p.setAddress(dto.address());
+                p.setCity(dto.city());
+                p.setZip(dto.zip());
+                p.setPhone(dto.phone());
+                p.setEmail(dto.email());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean deletePerson(String firstName, String lastName) {
+        if (firstName == null || lastName == null) return false;
+        return dataService.getPersons().removeIf(p ->
+                Objects.equals(p.getFirstName(), firstName) && Objects.equals(p.getLastName(), lastName));
+    }
+
+    public void addFirestation(FirestationDto dto) {
+        if (dto == null || dto.getAddress() == null || dto.getStation() == null) return;
+
+        Firestation f = new Firestation();
+        // adjust if model uses setters
+        f.setAddress(dto.getAddress());
+        f.setStation(dto.getStation());
+        dataService.getFirestations().add(f);
+    }
+
+    public boolean updateFirestation(FirestationDto dto) {
+        if (dto == null || dto.getAddress() == null || dto.getStation() == null) return false;
+
+        for (Firestation f : dataService.getFirestations()) {
+            if (f.address != null && f.address.equals(dto.getAddress())) {
+                f.station = dto.getStation();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean deleteFirestation(String address, String stationNumber) {
+        if ((address == null || address.isBlank()) && (stationNumber == null || stationNumber.isBlank())) {
+            return false;
+        }
+
+        if (address != null) {
+            return dataService.getFirestations().removeIf(f -> Objects.equals(f.address, address));
+        } else {
+            return dataService.getFirestations().removeIf(f -> Objects.equals(f.station, stationNumber));
+        }
     }
 }

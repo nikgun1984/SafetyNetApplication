@@ -3,7 +3,7 @@ package com.safetynet.alerts.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.safetynet.alerts.model.DataWrapper;
 import com.safetynet.alerts.model.Person;
-import com.safetynet.alerts.model.FireStationMapping;
+import com.safetynet.alerts.model.Firestation;
 import com.safetynet.alerts.model.MedicalRecord;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
@@ -18,7 +18,7 @@ import java.util.List;
 @Service
 public class DataService {
     private List<Person> persons = Collections.emptyList();
-    private List<FireStationMapping> firestations = Collections.emptyList();
+    private List<Firestation> firestations = Collections.emptyList();
     private List<MedicalRecord> medicalrecords = Collections.emptyList();
 
     @PostConstruct
