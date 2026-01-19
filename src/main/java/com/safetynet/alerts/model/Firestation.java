@@ -1,11 +1,12 @@
 package com.safetynet.alerts.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Setter;
 
-@Setter
+import lombok.Data;
+
+@Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Firestation {
-    public String address;
-    public String station;
+    private String address;
+    private String station;
 }

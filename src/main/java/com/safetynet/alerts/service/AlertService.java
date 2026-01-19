@@ -38,11 +38,11 @@ public class AlertService {
 
     public Map<String, Object> getFirestationPeople(String stationNumber) {
         List<Firestation> mappings = dataService.getFirestations().stream()
-                .filter(fs -> fs.station != null && fs.station.equals(stationNumber))
+                .filter(fs -> fs.getStation() != null && fs.getStation().equals(stationNumber))
                 .collect(Collectors.toList());
 
         Set<String> addresses = mappings.stream()
-                .map(fs -> fs.address)
+                .map(fs -> fs.getAddress())
                 .collect(Collectors.toSet());
 
         List<Person> persons = dataService.getPersons().stream()
@@ -97,8 +97,8 @@ public class AlertService {
     public List<String> getPhoneAlert(String stationNumber) {
         // get addresses covered by the station number
         Set<String> addresses = dataService.getFirestations().stream()
-                .filter(fs -> fs.station != null && fs.station.equals(stationNumber))
-                .map(fs -> fs.address)
+                .filter(fs -> fs.getStation() != null && fs.getStation().equals(stationNumber))
+                .map(fs -> fs.getAddress())
                 .collect(Collectors.toSet());
         // a list of phone numbers of residents served by the fire station
         return dataService.getPersons().stream()
@@ -111,10 +111,10 @@ public class AlertService {
 
     public FireAddressResponseDto getFire(String address) {
         Optional<Firestation> mapping = dataService.getFirestations().stream()
-                .filter(fs -> fs.address.equalsIgnoreCase(address))
+                .filter(fs -> fs.getAddress().equalsIgnoreCase(address))
                 .findFirst();
 
-        String station = mapping.map(m -> m.station).orElse(null);
+        String station = mapping.map(m -> m.getStation()).orElse(null);
 
         List<Person> residents = dataService.getPersons().stream()
                 .filter(p -> p.getAddress().equalsIgnoreCase(address))
@@ -140,8 +140,8 @@ public class AlertService {
 
         // addresses served by the requested stations
         Set<String> addresses = dataService.getFirestations().stream()
-                .filter(fs -> fs.station != null && stationList.contains(fs.station))
-                .map(fs -> fs.address)
+                .filter(fs -> fs.getStation() != null && stationList.contains(fs.getStation()))
+                .map(fs -> fs.getAddress())
                 .collect(Collectors.toSet());
 
         if (addresses.isEmpty()) {
@@ -277,8 +277,8 @@ public class AlertService {
         if (dto == null || dto.getAddress() == null || dto.getStation() == null) return false;
 
         for (Firestation f : dataService.getFirestations()) {
-            if (f.address != null && f.address.equals(dto.getAddress())) {
-                f.station = dto.getStation();
+            if (f.getAddress() != null && f.getAddress().equals(dto.getAddress())) {
+                f.setStation(dto.getStation());
                 return true;
             }
         }
@@ -291,9 +291,9 @@ public class AlertService {
         }
 
         if (address != null) {
-            return dataService.getFirestations().removeIf(f -> Objects.equals(f.address, address));
+            return dataService.getFirestations().removeIf(f -> Objects.equals(f.getAddress(), address));
         } else {
-            return dataService.getFirestations().removeIf(f -> Objects.equals(f.station, stationNumber));
+            return dataService.getFirestations().removeIf(f -> Objects.equals(f.getStation(), stationNumber));
         }
     }
 
@@ -322,8 +322,8 @@ public class AlertService {
                 m.setMedications(record.getMedications() != null
                         ? new ArrayList<>(record.getMedications())
                         : new ArrayList<>());
-                m.setAllergies(record.getMedications() != null
-                        ? new ArrayList<>(record.getMedications())
+                m.setAllergies(record.getAllergies() != null
+                        ? new ArrayList<>(record.getAllergies())
                         : new ArrayList<>());
                 return true;
             }

@@ -47,7 +47,7 @@ class AlertControllerTests {
 
     @Test
     void getFirestation_shouldReturnPersonsAndCounts() throws Exception {
-        ResidentInfoDto dto = new ResidentInfoDto("Nick", "Gundobin", "1509 Culver St", "305-510-9943");
+        ResidentInfoDto dto = new ResidentInfoDto("Nick", "Gundobin", "1509 Highland Oaks Rd", "305-510-9943");
         Map<String, Object> resp = new HashMap<>();
         resp.put("persons", Arrays.asList(dto));
         resp.put("children", 1);
@@ -60,7 +60,7 @@ class AlertControllerTests {
                 .andExpect(jsonPath("$.persons", hasSize(1)))
                 .andExpect(jsonPath("$.persons[0].firstName", is("Nick")))
                 .andExpect(jsonPath("$.persons[0].lastName", is("Gundobin")))
-                .andExpect(jsonPath("$.persons[0].address", is("1509 Culver St")))
+                .andExpect(jsonPath("$.persons[0].address", is("1509 Highland Oaks Rd")))
                 .andExpect(jsonPath("$.persons[0].phone", is("305-510-9943")))
                 .andExpect(jsonPath("$.children", is(1)))
                 .andExpect(jsonPath("$.adults", is(2)));
@@ -71,9 +71,9 @@ class AlertControllerTests {
         ChildInfoDto.HouseholdMember hm = new ChildInfoDto.HouseholdMember("Nick", "Gundobin");
         ChildInfoDto child = new ChildInfoDto("Jane", "Gundobin", 8, Arrays.asList(hm));
 
-        when(alertService.getChildAlert("1509 Culver St")).thenReturn(Arrays.asList(child));
+        when(alertService.getChildAlert("1509 Highland Oaks Rd")).thenReturn(Arrays.asList(child));
 
-        mockMvc.perform(get("/childAlert").param("address", "1509 Culver St"))
+        mockMvc.perform(get("/childAlert").param("address", "1509 Highland Oaks Rd"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].firstName", is("Jane")))
@@ -99,82 +99,82 @@ class AlertControllerTests {
 
     @Test
     void getFire_shouldReturnStationAndResidentsForAddress() throws Exception {
-        ResidentInfoDto resident = new ResidentInfoDto("John", "Doe", "305-510-9943", 23);
+        ResidentInfoDto resident = new ResidentInfoDto("Nick", "Gundobin", "305-510-9943", 23);
         FireAddressResponseDto fireDto = new FireAddressResponseDto("3", Arrays.asList(resident));
 
-        doReturn(fireDto).when(alertService).getFire("1509 Culver St");
+        doReturn(fireDto).when(alertService).getFire("1509 Highland Oaks Rd");
 
-        mockMvc.perform(get("/fire").param("address", "1509 Culver St"))
+        mockMvc.perform(get("/fire").param("address", "1509 Highland Oaks Rd"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.station", is("3")))
                 .andExpect(jsonPath("$.residents", hasSize(1)))
-                .andExpect(jsonPath("$.residents[0].firstName", is("John")))
-                .andExpect(jsonPath("$.residents[0].lastName", is("Doe")))
+                .andExpect(jsonPath("$.residents[0].firstName", is("Nick")))
+                .andExpect(jsonPath("$.residents[0].lastName", is("Gundobin")))
                 .andExpect(jsonPath("$.residents[0].phone", is("305-510-9943")));
     }
 
     @Test
     void getFloodStations_shouldReturnHouseholdsGroupedByAddress() throws Exception {
-        ResidentInfoDto resident = new ResidentInfoDto("John", "Doe", "305-510-9943", 23);
+        ResidentInfoDto resident = new ResidentInfoDto("Nick", "Gundobin", "305-510-9943", 23);
         Map<String, List<ResidentInfoDto>> resp = new HashMap<>();
-        resp.put("1509 Culver St", Arrays.asList(resident));
+        resp.put("1509 Highland Oaks Rd", Arrays.asList(resident));
 
         when(alertService.getFloodStations(Arrays.asList("1", "2"))).thenReturn(resp);
 
         mockMvc.perform(get("/flood/stations").param("stations", "1,2"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$['1509 Culver St']", hasSize(1)))
-                .andExpect(jsonPath("$['1509 Culver St'][0].firstName", is("John")))
-                .andExpect(jsonPath("$['1509 Culver St'][0].lastName", is("Doe")))
-                .andExpect(jsonPath("$['1509 Culver St'][0].phone", is("305-510-9943")))
-                .andExpect(jsonPath("$['1509 Culver St'][0].age", is(23)));
+                .andExpect(jsonPath("$['1509 Highland Oaks Rd']", hasSize(1)))
+                .andExpect(jsonPath("$['1509 Highland Oaks Rd'][0].firstName", is("Nick")))
+                .andExpect(jsonPath("$['1509 Highland Oaks Rd'][0].lastName", is("Gundobin")))
+                .andExpect(jsonPath("$['1509 Highland Oaks Rd'][0].phone", is("305-510-9943")))
+                .andExpect(jsonPath("$['1509 Highland Oaks Rd'][0].age", is(23)));
     }
 
     @Test
     void getPersonInfo_shouldReturnResidentsWithMedicalHistory() throws Exception {
         ResidentInfoDto dto = new ResidentInfoDto(
-                "John",
-                "Doe",
-                "1509 Culver St",
+                "Nick",
+                "Gundobin",
+                "1509 Highland Oaks Rd",
                 34,
-                "john.doe@example.com",
-                Arrays.asList("aspirin:100mg"),
+                "nick.gundobin@example.com",
+                Arrays.asList("med1"),
                 Arrays.asList("peanuts")
         );
 
-        when(alertService.getPersonInfoByLastName("Doe")).thenReturn(Arrays.asList(dto));
+        when(alertService.getPersonInfoByLastName("Gundobin")).thenReturn(Arrays.asList(dto));
 
-        mockMvc.perform(get("/personInfo").param("lastName", "Doe"))
+        mockMvc.perform(get("/personInfo").param("lastName", "Gundobin"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].firstName", is("John")))
-                .andExpect(jsonPath("$[0].lastName", is("Doe")))
-                .andExpect(jsonPath("$[0].address", is("1509 Culver St")))
+                .andExpect(jsonPath("$[0].firstName", is("Nick")))
+                .andExpect(jsonPath("$[0].lastName", is("Gundobin")))
+                .andExpect(jsonPath("$[0].address", is("1509 Highland Oaks Rd")))
                 .andExpect(jsonPath("$[0].age", is(34)))
-                .andExpect(jsonPath("$[0].email", is("john.doe@example.com")))
+                .andExpect(jsonPath("$[0].email", is("nick.gundobin@example.com")))
                 .andExpect(jsonPath("$[0].medications", hasSize(1)))
-                .andExpect(jsonPath("$[0].medications[0]", is("aspirin:100mg")))
+                .andExpect(jsonPath("$[0].medications[0]", is("med1")))
                 .andExpect(jsonPath("$[0].allergies", hasSize(1)))
                 .andExpect(jsonPath("$[0].allergies[0]", is("peanuts")));
     }
 
     @Test
     void getCommunityEmail_shouldReturnEmailsForCity() throws Exception {
-        List<String> emails = Arrays.asList("john.doe@example.com", "jane.doe@example.com");
+        List<String> emails = Arrays.asList("nick.gundobin@example.com", "jane.gundobin@example.com");
 
-        when(alertService.getEmailsByCity("Culver")).thenReturn(emails);
+        when(alertService.getEmailsByCity("Tampa")).thenReturn(emails);
 
-        mockMvc.perform(get("/communityEmail").param("city", "Culver"))
+        mockMvc.perform(get("/communityEmail").param("city", "Tampa"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0]", is("john.doe@example.com")))
-                .andExpect(jsonPath("$[1]", is("jane.doe@example.com")));
+                .andExpect(jsonPath("$[0]", is("nick.gundobin@example.com")))
+                .andExpect(jsonPath("$[1]", is("jane.gundobin@example.com")));
     }
 
     @Test
     void addFirestation_shouldReturnCreatedAndLocationHeader() throws Exception {
         String json = "{"
-                + "\"address\":\"1509 Culver St\","
+                + "\"address\":\"1509 Highland Oaks Rd\","
                 + "\"station\":\"1\""
                 + "}";
 
@@ -184,13 +184,13 @@ class AlertControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", org.hamcrest.Matchers.containsString("/firestation?address=1509%20Culver%20St")));
+                .andExpect(header().string("Location", org.hamcrest.Matchers.containsString("/firestation?address=1509%20Tampa%20St")));
     }
 
     @Test
     void addFirestation_whenMissingFields_shouldReturnBadRequest() throws Exception {
         String json = "{"
-                + "\"address\":\"1509 Culver St\""
+                + "\"address\":\"1509 Highland Oaks Rd\""
                 + "}";
 
         mockMvc.perform(post("/firestation")
@@ -202,7 +202,7 @@ class AlertControllerTests {
     @Test
     void updateFirestation_whenExists_shouldReturnOk() throws Exception {
         String json = "{"
-                + "\"address\":\"1509 Culver St\","
+                + "\"address\":\"1509 Highland Oaks Rd\","
                 + "\"station\":\"2\""
                 + "}";
 
@@ -243,9 +243,9 @@ class AlertControllerTests {
 
     @Test
     void deleteFirestation_byAddress_shouldReturnOk() throws Exception {
-        String json = "{ \"address\":\"1509 Culver St\" }";
+        String json = "{ \"address\":\"1509 Highland Oaks Rd\" }";
 
-        when(alertService.deleteFirestation("1509 Culver St", null)).thenReturn(true);
+        when(alertService.deleteFirestation("1509 Highland Oaks Rd", null)).thenReturn(true);
 
         mockMvc.perform(delete("/firestation")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -274,13 +274,13 @@ class AlertControllerTests {
     @Test
     void addPerson_shouldReturnCreatedAndLocationHeader() throws Exception {
         String json = "{"
-                + "\"firstName\":\"John\","
-                + "\"lastName\":\"Doe\","
-                + "\"address\":\"1509 Culver St\","
-                + "\"city\":\"Culver\","
-                + "\"zip\":\"97451\","
+                + "\"firstName\":\"Nick\","
+                + "\"lastName\":\"Gundobin\","
+                + "\"address\":\"1509 Highland Oaks Rd\","
+                + "\"city\":\"Tampa\","
+                + "\"zip\":\"34638\","
                 + "\"phone\":\"305-510-9943\","
-                + "\"email\":\"john.doe@example.com\""
+                + "\"email\":\"nick.gundobin@example.com\""
                 + "}";
 
         doNothing().when(alertService).addPerson(any(PersonDto.class));
@@ -289,7 +289,7 @@ class AlertControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", org.hamcrest.Matchers.containsString("/person?firstName=John&lastName=Doe")));
+                .andExpect(header().string("Location", org.hamcrest.Matchers.containsString("/person?firstName=Nick&lastName=Gundobin")));
     }
 
     @Test
@@ -301,13 +301,13 @@ class AlertControllerTests {
     @Test
     void updatePerson_whenExists_shouldReturnOk() throws Exception {
         String json = "{"
-                + "\"firstName\":\"John\","
-                + "\"lastName\":\"Doe\","
-                + "\"address\":\"1509 Culver St\","
-                + "\"city\":\"Culver\","
-                + "\"zip\":\"97451\","
+                + "\"firstName\":\"Nick\","
+                + "\"lastName\":\"Gundobin\","
+                + "\"address\":\"1509 Highland Oaks Rd\","
+                + "\"city\":\"Tampa\","
+                + "\"zip\":\"34638\","
                 + "\"phone\":\"305-510-9943\","
-                + "\"email\":\"john.doe@example.com\""
+                + "\"email\":\"nick.gundobin@example.com\""
                 + "}";
 
         when(alertService.updatePerson(any(PersonDto.class))).thenReturn(true);
@@ -372,10 +372,10 @@ class AlertControllerTests {
     @Test
     void addMedicalRecord_shouldReturnCreatedAndLocationHeader() throws Exception {
         String json = "{"
-                + "\"firstName\":\"John\","
-                + "\"lastName\":\"Doe\","
+                + "\"firstName\":\"Nick\","
+                + "\"lastName\":\"Gundobin\","
                 + "\"birthdate\":\"01/01/1990\","
-                + "\"medications\":[\"aspirin:100mg\"],"
+                + "\"medications\":[\"med1\"],"
                 + "\"allergies\":[\"peanuts\"]"
                 + "}";
 
@@ -385,7 +385,7 @@ class AlertControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", org.hamcrest.Matchers.containsString("/medicalRecord?firstName=John&lastName=Doe")));
+                .andExpect(header().string("Location", org.hamcrest.Matchers.containsString("/medicalRecord?firstName=Nick&lastName=Gundobin")));
     }
 
     @Test
@@ -397,10 +397,10 @@ class AlertControllerTests {
     @Test
     void updateMedicalRecord_whenExists_shouldReturnOk() throws Exception {
         String json = "{"
-                + "\"firstName\":\"John\","
-                + "\"lastName\":\"Doe\","
+                + "\"firstName\":\"Nick\","
+                + "\"lastName\":\"Gundobin\","
                 + "\"birthdate\":\"01/01/1990\","
-                + "\"medications\":[\"aspirin:100mg\"],"
+                + "\"medications\":[\"med1\"],"
                 + "\"allergies\":[\"peanuts\"]"
                 + "}";
 
@@ -430,9 +430,9 @@ class AlertControllerTests {
 
     @Test
     void deleteMedicalRecord_byBody_whenExists_shouldReturnOk() throws Exception {
-        String json = "{ \"firstName\":\"John\", \"lastName\":\"Doe\" }";
+        String json = "{ \"firstName\":\"Nick\", \"lastName\":\"Gundobin\" }";
 
-        when(alertService.deleteMedicalRecord("John", "Doe")).thenReturn(true);
+        when(alertService.deleteMedicalRecord("Nick", "Gundobin")).thenReturn(true);
 
         mockMvc.perform(delete("/medicalRecord")
                         .contentType(MediaType.APPLICATION_JSON)

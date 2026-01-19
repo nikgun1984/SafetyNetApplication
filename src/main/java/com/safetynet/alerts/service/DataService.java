@@ -27,9 +27,9 @@ public class DataService {
             ObjectMapper mapper = new ObjectMapper();
             InputStream is = new ClassPathResource("data.json").getInputStream();
             DataWrapper wrapper = mapper.readValue(is, DataWrapper.class);
-            this.persons = wrapper.persons != null ? wrapper.persons : Collections.emptyList();
-            this.firestations = wrapper.firestations != null ? wrapper.firestations : Collections.emptyList();
-            this.medicalrecords = wrapper.medicalrecords != null ? wrapper.medicalrecords : Collections.emptyList();
+            this.persons = wrapper.getPersons() != null ? wrapper.getPersons() : Collections.emptyList();
+            this.firestations = wrapper.getFirestations() != null ? wrapper.getFirestations() : Collections.emptyList();
+            this.medicalrecords = wrapper.getMedicalrecords() != null ? wrapper.getMedicalrecords() : Collections.emptyList();
         } catch (Exception e) {
             throw new RuntimeException("Failed to load data.json", e);
         }
