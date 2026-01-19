@@ -23,7 +23,7 @@ public class AlertService {
 
     private Optional<MedicalRecord> findMedical(Person p) {
         return dataService.getMedicalrecords().stream()
-                .filter(m -> m.firstName.equals(p.getFirstName()) && m.lastName.equals(p.getLastName()))
+                .filter(m -> m.getFirstName().equals(p.getFirstName()) && m.getLastName().equals(p.getLastName()))
                 .findFirst();
     }
 
@@ -57,7 +57,7 @@ public class AlertService {
         int children = 0;
         int adults = 0;
         for (Person p : persons) {
-            Optional<Integer> ageOpt = findMedical(p).flatMap(m -> ageFromBirthdate(m.birthdate));
+            Optional<Integer> ageOpt = findMedical(p).flatMap(m -> ageFromBirthdate(m.getBirthdate()));
             if (ageOpt.isPresent()) {
                 int age = ageOpt.get();
                 if (age <= 18) children++; else adults++;
@@ -81,7 +81,7 @@ public class AlertService {
         List<ChildInfoDto> result = new ArrayList<>();
 
         for (Person p : residents) {
-            Optional<Integer> ageOpt = findMedical(p).flatMap(m -> ageFromBirthdate(m.birthdate));
+            Optional<Integer> ageOpt = findMedical(p).flatMap(m -> ageFromBirthdate(m.getBirthdate()));
             // make sure to only include children (age 18 or younger)
             if (ageOpt.isPresent() && ageOpt.get() <= 18) {
                 List<ChildInfoDto.HouseholdMember> others = residents.stream()
@@ -103,7 +103,7 @@ public class AlertService {
         // a list of phone numbers of residents served by the fire station
         return dataService.getPersons().stream()
                 .filter(p -> addresses.contains(p.getAddress()))
-                .map(p -> p.getPhone())
+                .map(Person::getPhone)
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
@@ -124,9 +124,9 @@ public class AlertService {
         // age, and medical history (medications and allergies) of each person
         List<ResidentInfoDto> residentDtos = residents.stream().map(p -> {
             Optional<MedicalRecord> mr = findMedical(p);
-            int age = mr.flatMap(m -> ageFromBirthdate(m.birthdate)).orElse(0);
-            List<String> meds = mr.map(m -> m.medications).orElse(Collections.emptyList());
-            List<String> allergies = mr.map(m -> m.allergies).orElse(Collections.emptyList());
+            int age = mr.flatMap(m -> ageFromBirthdate(m.getBirthdate())).orElse(0);
+            List<String> meds = mr.map(MedicalRecord::getMedications).orElse(Collections.emptyList());
+            List<String> allergies = mr.map(MedicalRecord::getAllergies).orElse(Collections.emptyList());
             return new ResidentInfoDto(p.getFirstName(), p.getLastName(), p.getPhone(), age, meds, allergies);
         }).collect(Collectors.toList());
 
@@ -151,16 +151,16 @@ public class AlertService {
         // group persons by their address (use person's address string as the map key)
         Map<String, List<Person>> personsByAddress = dataService.getPersons().stream()
                 .filter(p -> p.getAddress() != null && addresses.stream().anyMatch(addr -> addr.equalsIgnoreCase(p.getAddress())))
-                .collect(Collectors.groupingBy(p -> p.getAddress()));
+                .collect(Collectors.groupingBy(Person::getAddress));
 
         Map<String, List<ResidentInfoDto>> result = new HashMap<>();
 
         for (Map.Entry<String, List<Person>> entry : personsByAddress.entrySet()) {
             List<ResidentInfoDto> residentDtos = entry.getValue().stream().map(p -> {
                 Optional<MedicalRecord> mr = findMedical(p);
-                int age = mr.flatMap(m -> ageFromBirthdate(m.birthdate)).orElse(0);
-                List<String> meds = mr.map(m -> m.medications).orElse(Collections.emptyList());
-                List<String> allergies = mr.map(m -> m.allergies).orElse(Collections.emptyList());
+                int age = mr.flatMap(m -> ageFromBirthdate(m.getBirthdate())).orElse(0);
+                List<String> meds = mr.map(MedicalRecord::getMedications).orElse(Collections.emptyList());
+                List<String> allergies = mr.map(MedicalRecord::getAllergies).orElse(Collections.emptyList());
                 return new ResidentInfoDto(p.getFirstName(), p.getLastName(), p.getPhone(), age, meds, allergies);
             }).collect(Collectors.toList());
 
@@ -183,14 +183,14 @@ public class AlertService {
                 .filter(p -> p.getLastName() != null && p.getLastName().toLowerCase().equals(match))
                 .map(p -> {
                     Optional<MedicalRecord> mr = dataService.getMedicalrecords().stream()
-                            .filter(m -> m.firstName != null && m.lastName != null
-                                    && m.firstName.equalsIgnoreCase(p.getFirstName())
-                                    && m.lastName.equalsIgnoreCase(p.getLastName()))
+                            .filter(m -> m.getFirstName() != null && m.getLastName() != null
+                                    && m.getFirstName().equalsIgnoreCase(p.getFirstName())
+                                    && m.getLastName().equalsIgnoreCase(p.getLastName()))
                             .findFirst();
 
-                    int age = mr.map(m -> computeAge(m.birthdate)).orElse(0);
-                    List<String> meds = mr.map(m -> m.medications).orElse(Collections.emptyList());
-                    List<String> allergies = mr.map(m -> m.allergies).orElse(Collections.emptyList());
+                    int age = mr.map(m -> computeAge(m.getBirthdate())).orElse(0);
+                    List<String> meds = mr.map(MedicalRecord::getMedications).orElse(Collections.emptyList());
+                    List<String> allergies = mr.map(MedicalRecord::getAllergies).orElse(Collections.emptyList());
 
                     return new ResidentInfoDto(
                             p.getFirstName(),
@@ -230,7 +230,7 @@ public class AlertService {
                         && p.getCity().trim().toLowerCase(Locale.ROOT).equals(match)
                         && p.getEmail() != null
                         && !p.getEmail().isBlank())
-                .map(p -> p.getEmail())
+                .map(Person::getEmail)
                 .distinct()
                 .collect(Collectors.toList());
     }
@@ -295,5 +295,51 @@ public class AlertService {
         } else {
             return dataService.getFirestations().removeIf(f -> Objects.equals(f.station, stationNumber));
         }
+    }
+
+    public void addMedicalRecord(ResidentInfoDto dto) {
+        if (dto == null || dto.getFirstName() == null || dto.getLastName() == null) return;
+        MedicalRecord m = new MedicalRecord(dto.getFirstName(), dto.getLastName(), dto.getBirthdate(), dto.getMedications() != null ? new ArrayList<>(dto.getMedications()) : new ArrayList<>(), dto.getAllergies() != null ? new ArrayList<>(dto.getAllergies()) : new ArrayList<>());
+        dataService.getMedicalrecords().add(m);
+    }
+
+    public boolean updateMedicalRecord(ResidentInfoDto record) {
+        if (record == null || record.getFirstName() == null || record.getLastName() == null) {
+            return false;
+        }
+
+        List<MedicalRecord> medicalRecords = dataService.getMedicalrecords();
+        if (medicalRecords == null) {
+            return false;
+        }
+
+        for (MedicalRecord m : medicalRecords) {
+            if (m.getFirstName() != null && m.getLastName() != null
+                    && m.getFirstName().equals(record.getFirstName())
+                    && m.getLastName().equals(record.getLastName())) {
+
+                m.setBirthdate(record.getBirthdate());
+                m.setMedications(record.getMedications() != null
+                        ? new ArrayList<>(record.getMedications())
+                        : new ArrayList<>());
+                m.setAllergies(record.getMedications() != null
+                        ? new ArrayList<>(record.getMedications())
+                        : new ArrayList<>());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean deleteMedicalRecord(String firstName, String lastName) {
+        if (firstName == null || lastName == null || firstName.isBlank() || lastName.isBlank()) {
+            return false;
+        }
+        List<MedicalRecord> medicalRecords = dataService.getMedicalrecords();
+        if (medicalRecords == null) {
+            return false;
+        }
+        return medicalRecords.removeIf(m ->
+                Objects.equals(m.getFirstName(), firstName) && Objects.equals(m.getLastName(), lastName));
     }
 }

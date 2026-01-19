@@ -368,4 +368,98 @@ class AlertControllerTests {
                         .content(json))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void addMedicalRecord_shouldReturnCreatedAndLocationHeader() throws Exception {
+        String json = "{"
+                + "\"firstName\":\"John\","
+                + "\"lastName\":\"Doe\","
+                + "\"birthdate\":\"01/01/1990\","
+                + "\"medications\":[\"aspirin:100mg\"],"
+                + "\"allergies\":[\"peanuts\"]"
+                + "}";
+
+        doNothing().when(alertService).addMedicalRecord(any(ResidentInfoDto.class));
+
+        mockMvc.perform(post("/medicalRecord")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", org.hamcrest.Matchers.containsString("/medicalRecord?firstName=John&lastName=Doe")));
+    }
+
+    @Test
+    void addMedicalRecord_whenNoBody_shouldReturnBadRequest() throws Exception {
+        mockMvc.perform(post("/medicalRecord"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateMedicalRecord_whenExists_shouldReturnOk() throws Exception {
+        String json = "{"
+                + "\"firstName\":\"John\","
+                + "\"lastName\":\"Doe\","
+                + "\"birthdate\":\"01/01/1990\","
+                + "\"medications\":[\"aspirin:100mg\"],"
+                + "\"allergies\":[\"peanuts\"]"
+                + "}";
+
+        when(alertService.updateMedicalRecord(any(ResidentInfoDto.class))).thenReturn(true);
+
+        mockMvc.perform(put("/medicalRecord")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void updateMedicalRecord_whenNotFound_shouldReturnNotFound() throws Exception {
+        String json = "{"
+                + "\"firstName\":\"Non\","
+                + "\"lastName\":\"Existent\","
+                + "\"birthdate\":\"01/01/1990\""
+                + "}";
+
+        when(alertService.updateMedicalRecord(any(ResidentInfoDto.class))).thenReturn(false);
+
+        mockMvc.perform(put("/medicalRecord")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deleteMedicalRecord_byBody_whenExists_shouldReturnOk() throws Exception {
+        String json = "{ \"firstName\":\"John\", \"lastName\":\"Doe\" }";
+
+        when(alertService.deleteMedicalRecord("John", "Doe")).thenReturn(true);
+
+        mockMvc.perform(delete("/medicalRecord")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void deleteMedicalRecord_whenMissingFields_shouldReturnBadRequest() throws Exception {
+        // missing lastName -> controller should return 400
+        String json = "{ \"firstName\":\"Only\" }";
+
+        mockMvc.perform(delete("/medicalRecord")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void deleteMedicalRecord_whenNotFound_shouldReturnNotFound() throws Exception {
+        String json = "{ \"firstName\":\"Non\", \"lastName\":\"Existent\" }";
+
+        when(alertService.deleteMedicalRecord("Non", "Existent")).thenReturn(false);
+
+        mockMvc.perform(delete("/medicalRecord")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isNotFound());
+    }
 }

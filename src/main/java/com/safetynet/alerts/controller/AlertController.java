@@ -170,4 +170,58 @@ public class AlertController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PostMapping("/medicalRecord")
+    public ResponseEntity<Void> addMedicalRecord(@RequestBody(required = false) ResidentInfoDto record,
+                                                 UriComponentsBuilder uriBuilder) {
+        if (record == null
+                || record.getFirstName() == null || record.getFirstName().isBlank()
+                || record.getLastName() == null || record.getLastName().isBlank()
+                || record.getBirthdate() == null || record.getBirthdate().isBlank()) {
+            log.warn("Invalid medical record create request");
+            return ResponseEntity.badRequest().build();
+        }
+        alertService.addMedicalRecord(record);
+        URI location = uriBuilder
+                .path("/medicalRecord")
+                .queryParam("firstName", record.getFirstName())
+                .queryParam("lastName", record.getLastName())
+                .build()
+                .encode()
+                .toUri();
+        log.info("Created medical record for {} {}", record.getFirstName(), record.getLastName());
+        return ResponseEntity.created(location).build();
+    }
+
+    @PutMapping("/medicalRecord")
+    public ResponseEntity<Void> updateMedicalRecord(@RequestBody ResidentInfoDto record) {
+        if (record == null || record.getFirstName() == null || record.getLastName() == null) {
+            log.warn("Bad request to PUT /medicalRecord - missing firstName or lastName");
+            return ResponseEntity.badRequest().build();
+        }
+        boolean updated = alertService.updateMedicalRecord(record);
+        if (updated) {
+            log.info("Updated medical record for {} {}", record.getFirstName(), record.getLastName());
+            return ResponseEntity.ok().build();
+        } else {
+            log.info("Medical record not found for update: {} {}", record.getFirstName(), record.getLastName());
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/medicalRecord")
+    public ResponseEntity<Void> deleteMedicalRecord(@RequestBody(required = false) ResidentInfoDto record) {
+        if (record.getFirstName() == null || record.getLastName() == null || record.getFirstName().isBlank() || record.getLastName().isBlank()) {
+            log.warn("Missing firstName/lastName for DELETE /medicalRecord");
+            return ResponseEntity.badRequest().build();
+        }
+        boolean deleted = alertService.deleteMedicalRecord(record.getFirstName(), record.getLastName());
+        if (deleted) {
+            log.info("Deleted medical record {} {}", record.getFirstName(), record.getLastName());
+            return ResponseEntity.ok().build();
+        } else {
+            log.info("Medical record not found for deletion: {} {}", record.getFirstName(), record.getLastName());
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

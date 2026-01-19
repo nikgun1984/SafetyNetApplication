@@ -16,6 +16,7 @@ public class ResidentInfoDto {
     private int age;
     private List<String> medications;
     private List<String> allergies;
+    private String birthdate;
 
     public ResidentInfoDto() {}
 
@@ -50,6 +51,15 @@ public class ResidentInfoDto {
         this.address = address;
         this.age = age;
         this.email = email;
+        this.medications = medications;
+        this.allergies = allergies;
+    }
+
+    public ResidentInfoDto(String firstName, String lastName, String birthdate,
+                           List<String> medications, List<String> allergies) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.birthdate = birthdate;
         this.medications = medications;
         this.allergies = allergies;
     }
