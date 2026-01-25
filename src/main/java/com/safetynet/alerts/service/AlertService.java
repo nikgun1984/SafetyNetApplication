@@ -195,7 +195,7 @@ public class AlertService {
                     return new ResidentInfoDto(
                             p.getFirstName(),
                             p.getLastName(),
-                            p.getPhone(),
+                            p.getAddress(),
                             age,
                             p.getEmail(),
                             meds,
@@ -239,6 +239,7 @@ public class AlertService {
         if (dto == null || dto.firstName() == null || dto.lastName() == null) return;
         Person p = new Person(dto.firstName(), dto.lastName(), dto.address(), dto.city(), dto.zip(), dto.phone(), dto.email());
         dataService.getPersons().add(p);
+        dataService.saveData();
     }
 
     public boolean updatePerson(PersonDto dto) {
@@ -251,6 +252,7 @@ public class AlertService {
                 p.setZip(dto.zip());
                 p.setPhone(dto.phone());
                 p.setEmail(dto.email());
+                dataService.saveData();
                 return true;
             }
         }
@@ -259,8 +261,12 @@ public class AlertService {
 
     public boolean deletePerson(String firstName, String lastName) {
         if (firstName == null || lastName == null) return false;
-        return dataService.getPersons().removeIf(p ->
+        boolean removed = dataService.getPersons().removeIf(p ->
                 Objects.equals(p.getFirstName(), firstName) && Objects.equals(p.getLastName(), lastName));
+        if (removed) {
+            dataService.saveData();
+        }
+        return removed;
     }
 
     public void addFirestation(FirestationDto dto) {
@@ -271,6 +277,7 @@ public class AlertService {
         f.setAddress(dto.getAddress());
         f.setStation(dto.getStation());
         dataService.getFirestations().add(f);
+        dataService.saveData();
     }
 
     public boolean updateFirestation(FirestationDto dto) {
@@ -279,6 +286,7 @@ public class AlertService {
         for (Firestation f : dataService.getFirestations()) {
             if (f.getAddress() != null && f.getAddress().equals(dto.getAddress())) {
                 f.setStation(dto.getStation());
+                dataService.saveData();
                 return true;
             }
         }
@@ -290,17 +298,23 @@ public class AlertService {
             return false;
         }
 
+        boolean removed;
         if (address != null) {
-            return dataService.getFirestations().removeIf(f -> Objects.equals(f.getAddress(), address));
+            removed = dataService.getFirestations().removeIf(f -> Objects.equals(f.getAddress(), address));
         } else {
-            return dataService.getFirestations().removeIf(f -> Objects.equals(f.getStation(), stationNumber));
+            removed = dataService.getFirestations().removeIf(f -> Objects.equals(f.getStation(), stationNumber));
         }
+        if (removed) {
+            dataService.saveData();
+        }
+        return removed;
     }
 
     public void addMedicalRecord(ResidentInfoDto dto) {
         if (dto == null || dto.getFirstName() == null || dto.getLastName() == null) return;
         MedicalRecord m = new MedicalRecord(dto.getFirstName(), dto.getLastName(), dto.getBirthdate(), dto.getMedications() != null ? new ArrayList<>(dto.getMedications()) : new ArrayList<>(), dto.getAllergies() != null ? new ArrayList<>(dto.getAllergies()) : new ArrayList<>());
         dataService.getMedicalrecords().add(m);
+        dataService.saveData();
     }
 
     public boolean updateMedicalRecord(ResidentInfoDto record) {
@@ -325,6 +339,7 @@ public class AlertService {
                 m.setAllergies(record.getAllergies() != null
                         ? new ArrayList<>(record.getAllergies())
                         : new ArrayList<>());
+                dataService.saveData();
                 return true;
             }
         }
@@ -339,7 +354,11 @@ public class AlertService {
         if (medicalRecords == null) {
             return false;
         }
-        return medicalRecords.removeIf(m ->
+        boolean removed = medicalRecords.removeIf(m ->
                 Objects.equals(m.getFirstName(), firstName) && Objects.equals(m.getLastName(), lastName));
+        if (removed) {
+            dataService.saveData();
+        }
+        return removed;
     }
 }

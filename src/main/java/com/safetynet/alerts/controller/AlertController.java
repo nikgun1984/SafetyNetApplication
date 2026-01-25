@@ -208,7 +208,7 @@ public class AlertController {
             return ResponseEntity.notFound().build();
         }
     }
-
+    // PathParams
     @DeleteMapping("/medicalRecord")
     public ResponseEntity<Void> deleteMedicalRecord(@RequestBody(required = false) ResidentInfoDto record) {
         if (record.getFirstName() == null || record.getLastName() == null || record.getFirstName().isBlank() || record.getLastName().isBlank()) {
