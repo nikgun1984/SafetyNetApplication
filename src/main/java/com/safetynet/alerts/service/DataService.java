@@ -17,6 +17,26 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Service responsible for managing the persistence and in-memory storage of application data.
+ * <p>
+ * This service handles:
+ * <ul>
+ *   <li>Loading data from a JSON file on application startup</li>
+ *   <li>Maintaining in-memory collections of persons, fire stations, and medical records</li>
+ *   <li>Persisting data changes back to the JSON file</li>
+ * </ul>
+ * </p>
+ * <p>
+ * The data is stored in {@code data/data.json} and is automatically loaded during the
+ * {@link PostConstruct} phase. All CRUD operations trigger automatic persistence to ensure
+ * data consistency between restarts.
+ * </p>
+ * 
+ * @see Person
+ * @see Firestation
+ * @see MedicalRecord
+ */
 @Getter
 @Service
 public class DataService {

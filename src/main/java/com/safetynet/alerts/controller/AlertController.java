@@ -14,6 +14,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * REST controller for SafetyNet Alerts application.
+ * <p>
+ * This controller exposes endpoints for emergency services to:
+ * <ul>
+ *   <li>Retrieve information about residents covered by fire stations</li>
+ *   <li>Get children at specific addresses with household information</li>
+ *   <li>Access phone numbers for emergency SMS alerts</li>
+ *   <li>Query fire station coverage and flood information</li>
+ *   <li>Look up person details with medical history</li>
+ *   <li>Manage CRUD operations for persons, fire stations, and medical records</li>
+ * </ul>
+ * </p>
+ * <p>
+ * All endpoints return JSON responses. Query endpoints use GET requests,
+ * while resource management uses POST, PUT, and DELETE operations with
+ * automatic data persistence.
+ * </p>
+ * 
+ */
 @RestController
 public class AlertController {
 

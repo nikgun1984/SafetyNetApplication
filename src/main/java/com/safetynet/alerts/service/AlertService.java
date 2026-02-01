@@ -12,6 +12,9 @@ import java.time.Period;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Service class providing alert-related functionalities.
+ */
 @Service
 public class AlertService {
     private final DataService dataService;
@@ -36,6 +39,12 @@ public class AlertService {
         }
     }
 
+    /**
+     * Get people covered by a firestation number along with counts of adults and children.
+     *
+     * @param stationNumber firestation number as String
+     * @return Map with keys "persons" (list of ResidentInfoDto), "children" (int), and "adults" (int)
+     */
     public Map<String, Object> getFirestationPeople(String stationNumber) {
         List<Firestation> mappings = dataService.getFirestations().stream()
                 .filter(fs -> fs.getStation() != null && fs.getStation().equals(stationNumber))
@@ -83,15 +92,19 @@ public class AlertService {
         for (Person p : residents) {
             Optional<Integer> ageOpt = findMedical(p).flatMap(m -> ageFromBirthdate(m.getBirthdate()));
             // make sure to only include children (age 18 or younger)
-            if (ageOpt.isPresent() && ageOpt.get() <= 18) {
-                List<ChildInfoDto.HouseholdMember> others = residents.stream()
-                        .filter(o -> !(o.getFirstName().equals(p.getFirstName()) && o.getLastName().equals(p.getLastName())))
-                        .map(o -> new ChildInfoDto.HouseholdMember(o.getFirstName(), o.getLastName()))
-                        .collect(Collectors.toList());
-                result.add(new ChildInfoDto(p.getFirstName(), p.getLastName(), ageOpt.get(), others));
-            }
+            includeChildren(p, ageOpt, residents, result);
         }
         return result;
+    }
+
+    private static void includeChildren(Person p, Optional<Integer> ageOpt, List<Person> residents, List<ChildInfoDto> result) {
+        if (ageOpt.isPresent() && ageOpt.get() <= 18) {
+            List<ChildInfoDto.HouseholdMember> others = residents.stream()
+                    .filter(o -> !(o.getFirstName().equals(p.getFirstName()) && o.getLastName().equals(p.getLastName())))
+                    .map(o -> new ChildInfoDto.HouseholdMember(o.getFirstName(), o.getLastName()))
+                    .collect(Collectors.toList());
+            result.add(new ChildInfoDto(p.getFirstName(), p.getLastName(), ageOpt.get(), others));
+        }
     }
 
     public List<String> getPhoneAlert(String stationNumber) {
